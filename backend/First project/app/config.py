@@ -9,9 +9,11 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────
-    MONGODB_URL: str = "mongodb://localhost:27017/fitness_db"
+    MONGODB_URL: str
 
-    # ── AI API ────────────────────────────────────────────────
+    @property
+    def check_mongo(self):
+        pass
     QWEN_API_KEY: str = "your-qwen-api-key-here"
 
     # ── JWT Auth ──────────────────────────────────────────────
