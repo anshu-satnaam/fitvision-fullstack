@@ -15,7 +15,7 @@ services:
       - key: PYTHON_VERSION
         value: "3.12"
       - key: NODE_VERSION
-        value: "20.11.0"
+        value: "22.14.0"
       - key: SECRET_KEY
         generateValue: true
       - key: TOTP_ISSUER_NAME
