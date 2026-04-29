@@ -1,0 +1,17 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (ephemeral on Render)
+static/avatars/
+
+# OS
+.DS_Store
+Thumbs.db

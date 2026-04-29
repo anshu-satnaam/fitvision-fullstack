@@ -1,0 +1,141 @@
+/* ── Global Styles ─────────────────────────────────────── */
+@import "tailwindcss";
+
+@theme {
+  --color-earthy-primary: #2a1220;
+  --color-earthy-secondary: #3d1a2d;
+  --color-earthy-accent: #d4a574;
+  --color-earthy-dark: #12080d;
+  --color-earthy-silver: #e2e2e2;
+  --font-family-heading: 'CabinetGrotesk', sans-serif;
+  --font-family-body: 'Satoshi', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Satoshi', sans-serif;
+  background: #12080d;
+  color: #e2e2e2;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.heading { font-family: 'CabinetGrotesk', sans-serif; }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #12080d; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #d4a574; border-radius: 10px; }
+
+/* ── Floating Particles ────────────────────────────────── */
+.floating-particle {
+  position: absolute;
+  background: linear-gradient(to bottom, #d4a574, transparent);
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: float 20s infinite linear;
+}
+
+@keyframes float {
+  0%   { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-100vh) rotate(360deg); }
+}
+
+/* ── Wave ──────────────────────────────────────────────── */
+.wave-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+  pointer-events: none;
+}
+
+.wave-bg svg {
+  position: relative;
+  display: block;
+  width: calc(150% + 1.3px);
+  height: 150px;
+  animation: wave-move 10s ease-in-out infinite alternate;
+}
+
+@keyframes wave-move {
+  from { transform: translateX(-50px); }
+  to   { transform: translateX(50px);  }
+}
+
+/* ── Card 3D ────────────────────────────────────────────── */
+.card-3d {
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s ease;
+}
+
+/* ── Mascot ────────────────────────────────────────────── */
+.mascot-float,
+.mascot-idle {
+  animation: mascot-float 3s ease-in-out infinite;
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50%       { transform: translateY(-10px) rotate(5deg) scale(1.02); }
+}
+
+.mascot-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* ── 3-D inputs ────────────────────────────────────────── */
+.form-perspective { perspective: 1200px; }
+
+.input-3d {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.input-3d:focus-within {
+  transform: translateZ(20px) rotateX(2deg);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* ── Parallax ──────────────────────────────────────────── */
+.parallax-layer {
+  pointer-events: none;
+}
+
+/* ── Speech bubble pop ─────────────────────────────────── */
+.speech-bubble-pop {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ── Shimmer on CTA ────────────────────────────────────── */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%);  }
+}
+
+.cta-shimmer:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1s ease forwards;
+}
+
+/* ── Pulse slow ────────────────────────────────────────── */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.animate-pulse-slow { animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* ── Ping ──────────────────────────────────────────────── */
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }

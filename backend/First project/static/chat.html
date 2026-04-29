@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Chatbot</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+        .message.user {
+            align-self: flex-end;
+            background-color: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.ai {
+            align-self: flex-start;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #334155;
+        }
+        #input-container {
+            display: flex;
+            padding: 20px;
+            background-color: #0f172a;
+            border-top: 1px solid #1e293b;
+        }
+        #message-input {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background-color: #1e293b;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+        #message-input:focus {
+            border-color: #3b82f6;
+        }
+        #send-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 25px;
+            margin-left: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #send-btn:hover {
+            background-color: #2563eb;
+        }
+        #send-btn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+        #auth-container {
+            padding: 20px;
+            background-color: #1e293b;
+            text-align: center;
+        }
+        #token-input {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+        }
+        .typing-indicator {
+            font-style: italic;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-container">
+        <h3>Welcome to AI Fitness Coach</h3>
+        <p>Please enter your JWT Token to connect (you can get this by logging in via /docs)</p>
+        <input type="text" id="token-input" placeholder="Paste your eyJ... token here">
+        <button id="connect-btn" style="padding: 10px 20px; margin-top: 10px; background: #10b981; color: white; border: none; border-radius: 5px; cursor: pointer;">Connect</button>
+    </div>
+
+    <div id="chat-container">
+        <div class="message ai">Hello! I am your elite AI Personal Trainer. How can I help you reach your fitness goals today?</div>
+    </div>
+
+    <div id="input-container" style="display: none;">
+        <input type="text" id="message-input" placeholder="Ask about workouts, diet, form..." disabled>
+        <button id="send-btn" disabled>Send</button>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentAiMessageDiv = null;
+        
+        const connectBtn = document.getElementById('connect-btn');
+        const tokenInput = document.getElementById('token-input');
+        const authContainer = document.getElementById('auth-container');
+        const inputContainer = document.getElementById('input-container');
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        connectBtn.addEventListener('click', () => {
+            const token = tokenInput.value.trim();
+            if (!token) return alert('Please enter a token');
+            
+            const wsUrl = `ws://${window.location.host}/ai_chat/ws/${token}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                authContainer.style.display = 'none';
+                inputContainer.style.display = 'flex';
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                appendSystemMessage("Connected to AI Coach successfully!");
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === "ai_status" && data.content === "typing") {
+                    // Start of a new AI message
+                    currentAiMessageDiv = document.createElement('div');
+                    currentAiMessageDiv.className = 'message ai';
+                    chatContainer.appendChild(currentAiMessageDiv);
+                    scrollToBottom();
+                } 
+                else if (data.type === "ai_chunk") {
+                    // Append streaming chunk
+                    if (currentAiMessageDiv) {
+                        // Replace newlines with <br> for HTML formatting
+                        const text = data.content.replace(/\n/g, '<br>');
+                        currentAiMessageDiv.innerHTML += text;
+                        scrollToBottom();
+                    }
+                } 
+                else if (data.type === "ai_status" && data.content === "done") {
+                    // Done typing
+                    currentAiMessageDiv = null;
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                    messageInput.focus();
+                }
+                else if (data.type === "error") {
+                    appendSystemMessage(`Error: ${data.content}`);
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                }
+            };
+
+            ws.onclose = () => {
+                appendSystemMessage("Disconnected from server.");
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+            };
+        });
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+            // Display user message
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message user';
+            msgDiv.textContent = text;
+            chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+
+            // Disable inputs while waiting
+            messageInput.value = '';
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // Send to WebSocket
+            ws.send(JSON.stringify({ content: text }));
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function appendSystemMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'typing-indicator';
+            msgDiv.style.textAlign = 'center';
+            msgDiv.style.width = '100%';
+            msgDiv.textContent = text;
+            chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

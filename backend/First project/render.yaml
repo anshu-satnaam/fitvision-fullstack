@@ -1,0 +1,21 @@
+# Render deployment blueprint
+# Deploy via: https://render.com/deploy
+
+services:
+  - type: web
+    name: fitvision-fullstack
+    env: python
+    region: oregon
+    plan: free
+    # Build both React frontend and Python backend
+    buildCommand: "npm install && npm run build && cd 'backend/First project' && pip install -r requirements.txt"
+    # Start the FastAPI server
+    startCommand: "cd 'backend/First project' && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TOTP_ISSUER_NAME
+        value: FitnessApp
+    healthCheckPath: /api/health
