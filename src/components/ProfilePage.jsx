@@ -13,14 +13,14 @@ const STATS = [
   { label: 'PR Score',   value: '98',     color: '#22d3ee' },
 ]
 
-const CHART_DAYS = [
-  { day: 'Mon', pct: 40,  val: 420 },
-  { day: 'Tue', pct: 60,  val: 580 },
-  { day: 'Wed', pct: 35,  val: 340 },
-  { day: 'Thu', pct: 85,  val: 820 },
-  { day: 'Fri', pct: 55,  val: 530, highlight: true },
-  { day: 'Sat', pct: 45,  val: 440 },
-  { day: 'Sun', pct: 70,  val: 680 },
+const DEFAULT_CHART_DAYS = [
+  { day: 'Mon', pct: 0, val: 0 },
+  { day: 'Tue', pct: 0, val: 0 },
+  { day: 'Wed', pct: 0, val: 0 },
+  { day: 'Thu', pct: 0, val: 0 },
+  { day: 'Fri', pct: 0, val: 0 },
+  { day: 'Sat', pct: 0, val: 0 },
+  { day: 'Sun', pct: 0, val: 0 },
 ]
 
 const BADGES = ['fluent-emoji:fire', 'fluent-emoji:flexed-biceps', 'fluent-emoji:crown']
@@ -42,9 +42,38 @@ export default function ProfilePage() {
     { label: 'Streak',     value: `${user?.streak ?? '—'} 🔥`, color: '#f97316' },
     { label: 'PR Score',   value: `${user?.level ?? '—'}`,  color: '#22d3ee' },
   ])
+  const [chartDays, setChartDays] = useState(DEFAULT_CHART_DAYS)
   const cardRefs = useRef([])
   const fileInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+  const userPoints = user?.points || 0
+  let tierName = 'Bronze Tier'
+  let nextTierName = 'Silver Ascension'
+  let pointsNeeded = 100 - userPoints
+  let tierPct = Math.min(100, (userPoints / 100) * 100)
+
+  if (userPoints >= 5000) {
+    tierName = 'Diamond Tier'
+    nextTierName = 'Max Level'
+    pointsNeeded = 0
+    tierPct = 100
+  } else if (userPoints >= 1000) {
+    tierName = 'Platinum Tier'
+    nextTierName = 'Diamond Ascension'
+    pointsNeeded = 5000 - userPoints
+    tierPct = ((userPoints - 1000) / 4000) * 100
+  } else if (userPoints >= 500) {
+    tierName = 'Gold Tier'
+    nextTierName = 'Platinum Ascension'
+    pointsNeeded = 1000 - userPoints
+    tierPct = ((userPoints - 500) / 500) * 100
+  } else if (userPoints >= 100) {
+    tierName = 'Silver Tier'
+    nextTierName = 'Gold Ascension'
+    pointsNeeded = 500 - userPoints
+    tierPct = ((userPoints - 100) / 400) * 100
+  }
 
   // Load real profile + workouts from backend
   useEffect(() => {
@@ -67,7 +96,44 @@ export default function ProfilePage() {
     }).catch(() => {})
     // Workout count
     workoutAPI.myWorkouts().then(ws => {
-      setStats(prev => prev.map(s => s.label === 'Workouts' ? { ...s, value: String(ws.length) } : s))
+      setStats(prev => prev.map(s => s.label === 'Workouts' ? { ...s, value: String(ws.total || 0) } : s))
+      if (ws.items) {
+        const daysArr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const today = new Date().getDay();
+        const jsDayToOurDay = [6, 0, 1, 2, 3, 4, 5];
+        const currentOurDay = jsDayToOurDay[today];
+        
+        let newChartDays = [];
+        for (let i = 6; i >= 0; i--) {
+          let dayIndex = (currentOurDay - i + 7) % 7;
+          newChartDays.push({ day: daysArr[dayIndex], pct: 0, val: 0, highlight: i === 0 });
+        }
+
+        ws.items.forEach(item => {
+           if (!item.created_at) return;
+           const date = new Date(item.created_at);
+           const now = new Date();
+           // normalize to start of day for comparison
+           const startOfNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+           const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+           const diffDays = Math.floor((startOfNow - startOfDate) / (1000 * 60 * 60 * 24));
+           
+           if (diffDays >= 0 && diffDays < 7) {
+             const dayIndex = jsDayToOurDay[date.getDay()];
+             const chartItem = newChartDays.find(d => d.day === daysArr[dayIndex]);
+             if (chartItem) {
+                chartItem.val += (item.reps || 0);
+             }
+           }
+        });
+
+        const maxVal = Math.max(...newChartDays.map(d => d.val), 10);
+        newChartDays.forEach(d => {
+           d.pct = Math.round((d.val / maxVal) * 100);
+        });
+
+        setChartDays(newChartDays);
+      }
     }).catch(() => {})
   }, [user])
 
@@ -127,7 +193,7 @@ export default function ProfilePage() {
                 {uploadingAvatar && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', borderRadius: '50%' }}><span className="animate-pulse">...</span></div>}
               </div>
               <div style={{ position: 'absolute', bottom: '-4px', right: '8px', background: '#d4a574', color: '#12080d', padding: '2px 10px', borderRadius: '9999px', fontSize: '0.55rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', pointerEvents: 'none' }}>
-                Elite Tier
+                {tierName}
               </div>
               {/* Glow halo */}
               <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(212,165,116,0.15)', filter: 'blur(20px)', zIndex: -1, pointerEvents: 'none' }} />
@@ -197,7 +263,7 @@ export default function ProfilePage() {
 
               {/* Bars */}
               <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '0.75rem', padding: '0 0.5rem' }}>
-                {CHART_DAYS.map((d) => (
+                {chartDays.map((d) => (
                   <div key={d.day} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem 0.75rem 0 0', position: 'relative', height: '100%', display: 'flex', alignItems: 'flex-end' }}
                     className="chart-bar-group"
                   >
@@ -224,7 +290,7 @@ export default function ProfilePage() {
                 ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', padding: '0 0.5rem' }}>
-                {CHART_DAYS.map(d => (
+                {chartDays.map(d => (
                   <span key={d.day} style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.2)' }}>{d.day}</span>
                 ))}
               </div>
@@ -240,14 +306,14 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#d4a574' }}>Gold Tier</span>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)' }}>85%</span>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#d4a574' }}>{tierName}</span>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)' }}>{Math.round(tierPct)}%</span>
                   </div>
                   <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ width: '85%', height: '100%', background: '#d4a574', borderRadius: '9999px', boxShadow: '0 0 10px rgba(212,165,116,0.4)' }} />
+                    <div style={{ width: `${tierPct}%`, height: '100%', background: '#d4a574', borderRadius: '9999px', boxShadow: '0 0 10px rgba(212,165,116,0.4)', transition: 'width 0.8s ease' }} />
                   </div>
                   <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', marginTop: '0.75rem', lineHeight: 1.5 }}>
-                    "2,140 more reps until Platinum Ascension"
+                    "{pointsNeeded > 0 ? `${pointsNeeded.toLocaleString()} more reps until ${nextTierName}` : 'Max level reached!'}"
                   </p>
                 </div>
               </div>

@@ -75,8 +75,8 @@ export const profileAPI = {
 
 // ── Workouts ─────────────────────────────────────────────────────────────────
 export const workoutAPI = {
-  /** GET /workouts/me */
-  myWorkouts: () => req('GET', '/workouts/me'),
+  /** GET /workouts */
+  myWorkouts: () => req('GET', '/workouts'),
 
   /** POST /workouts/start */
   startSession: (exercise) => req('POST', '/workouts/start', { exercise }),

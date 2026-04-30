@@ -19,6 +19,7 @@ const DUEL_MESSAGES = [
 
 export default function DuelPage() {
   const { user } = useAuth()
+  const [isDuelActive, setIsDuelActive] = useState(false)
   const [reps, setReps] = useState(0)
   const [repFlash, setRepFlash] = useState(false)
   const [workoutTimeSecs, setWorkoutTimeSecs] = useState(0)
@@ -29,8 +30,10 @@ export default function DuelPage() {
   const feedRef = useRef(null)
   const nextId = useRef(3)
 
-  // Simulate rep increments + feed updates + timer
+  // Simulate rep increments + feed updates + timer ONLY when duel is active
   useEffect(() => {
+    if (!isDuelActive) return
+    
     const iv = setInterval(() => {
       setWorkoutTimeSecs(t => t + 2) // Simulate time passing faster (2 virtual mins per 3 real secs)
       if (Math.random() > 0.5) {
@@ -49,7 +52,7 @@ export default function DuelPage() {
       }
     }, 3000)
     return () => clearInterval(iv)
-  }, [user])
+  }, [isDuelActive, user])
 
   // Energy pool logic: 100% starts. 60 min total capacity. 
   // If user works 45 min, 25% energy is left. After 0%, needs 15 min break.
@@ -263,9 +266,13 @@ export default function DuelPage() {
               <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', background: 'rgba(212,165,116,0.04)', borderRadius: '50%', transform: 'translate(40%, -40%)' }} />
               <h3 className="heading" style={{ fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>Session Actions</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <ActionBtn label="Start Challenge" icon="lucide:check-circle" primary />
+                {!isDuelActive ? (
+                  <ActionBtn label="Start Challenge" icon="lucide:check-circle" primary onClick={() => setIsDuelActive(true)} />
+                ) : (
+                  <ActionBtn label="Pause Challenge" icon="lucide:pause-circle" onClick={() => setIsDuelActive(false)} />
+                )}
                 <ActionBtn label="View Opponent Stats" />
-                <ActionBtn label="Surrender" danger />
+                <ActionBtn label="Surrender" danger onClick={() => { setIsDuelActive(false); setReps(0); setWorkoutTimeSecs(0); setFeedItems([{ id: 1, type: 'system', text: 'Challenge aborted.', sub: 'System' }]); }} />
               </div>
             </div>
           </div>
@@ -375,7 +382,7 @@ function MiniStatCard({ icon, label, value, color, pct, barColor, iconBg = 'rgba
   )
 }
 
-function ActionBtn({ label, icon, primary, danger }) {
+function ActionBtn({ label, icon, primary, danger, onClick }) {
   const base = {
     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
     fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em',
@@ -389,6 +396,7 @@ function ActionBtn({ label, icon, primary, danger }) {
 
   return (
     <button style={style}
+      onClick={onClick}
       onMouseOver={e => {
         if (primary)       e.currentTarget.style.background = '#e89b7b'
         else if (danger)   { e.currentTarget.style.background = 'rgb(239,68,68)'; e.currentTarget.style.color = 'white' }
