@@ -7,6 +7,8 @@ const NAV_LINKS = [
   { label: 'Chatbot',      to: '/dashboard/chatbot' },
   { label: 'Duel',         to: '/dashboard/duel' },
   { label: 'Leaderboard',  to: '/dashboard/leaderboard' },
+  { label: 'Clan',         to: '/dashboard/clan' },
+  { label: 'Friends',      to: '/dashboard/friends' },
   { label: 'Profile',      to: '/dashboard/profile' },
 ]
 

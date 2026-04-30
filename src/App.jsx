@@ -6,6 +6,8 @@ import ChatbotPage     from './components/ChatbotPage'
 import ProfilePage     from './components/ProfilePage'
 import DuelPage        from './components/DuelPage'
 import LeaderboardPage from './components/LeaderboardPage'
+import FriendsPage     from './components/FriendsPage'
+import ClanPage        from './components/ClanPage'
 
 /** Inner router — needs to be inside AuthProvider to call useAuth */
 function AppRoutes() {
@@ -28,6 +30,8 @@ function AppRoutes() {
       <Route path="/dashboard/profile"     element={isLoggedIn ? <ProfilePage />     : <Navigate to="/" replace />} />
       <Route path="/dashboard/duel"        element={isLoggedIn ? <DuelPage />        : <Navigate to="/" replace />} />
       <Route path="/dashboard/leaderboard" element={isLoggedIn ? <LeaderboardPage /> : <Navigate to="/" replace />} />
+      <Route path="/dashboard/friends"     element={isLoggedIn ? <FriendsPage />     : <Navigate to="/" replace />} />
+      <Route path="/dashboard/clan"        element={isLoggedIn ? <ClanPage />        : <Navigate to="/" replace />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
