@@ -62,7 +62,9 @@ async def register(request: RegisterRequest):
 
 @router.post("/login", response_model=AuthResponse)
 async def login(request: LoginRequest):
-    """Authenticate user and return access token."""
+    """Authenticate user, update streak if first login of the day, and return access token."""
+    from datetime import datetime, timezone, timedelta
+    
     user = await User.find_one(User.username == request.username)
 
     if not user or not verify_password(request.password, user.hashed_password):
@@ -70,6 +72,25 @@ async def login(request: LoginRequest):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
+
+    now = datetime.now(timezone.utc)
+    today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    
+    if user.last_login_date:
+        last_login_start = datetime(user.last_login_date.year, user.last_login_date.month, user.last_login_date.day, tzinfo=timezone.utc)
+        if last_login_start < today_start:
+            # It's a new day! Check if it was exactly yesterday
+            yesterday_start = today_start - timedelta(days=1)
+            if last_login_start == yesterday_start:
+                user.streak += 1
+            else:
+                user.streak = 1
+    else:
+        # First time login after registration
+        user.streak = 1
+        
+    user.last_login_date = now
+    await user.save()
 
     token = create_access_token(str(user.id))
 

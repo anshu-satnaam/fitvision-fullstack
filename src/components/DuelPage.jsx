@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import DashboardNav from './DashboardNav'
 import DashboardMascot from './DashboardMascot'
 import FloatingParticles from './FloatingParticles'
+import { useAuth } from '../AuthContext'
 
 const CHALLENGE_MODES = [
   { icon: 'lucide:zap',          label: 'Rep Sprint',   desc: 'First to reach 50 reps wins the round.',      xp: '+250 XP' },
@@ -17,27 +18,29 @@ const DUEL_MESSAGES = [
 ]
 
 export default function DuelPage() {
-  const [reps, setReps] = useState(24)
+  const { user } = useAuth()
+  const [reps, setReps] = useState(0)
   const [repFlash, setRepFlash] = useState(false)
+  const [workoutTimeSecs, setWorkoutTimeSecs] = useState(0)
   const [feedItems, setFeedItems] = useState([
-    { id: 1, type: 'us',     text: 'SETV performed 5 squats!',     sub: 'Just now' },
-    { id: 2, type: 'system', text: 'Waiting for opponent activity...', sub: 'System' },
+    { id: 1, type: 'system', text: 'Waiting for opponent activity...', sub: 'System' },
   ])
   const cardRefs = useRef([])
   const feedRef = useRef(null)
   const nextId = useRef(3)
 
-  // Simulate rep increments + feed updates
+  // Simulate rep increments + feed updates + timer
   useEffect(() => {
     const iv = setInterval(() => {
-      if (Math.random() > 0.8) {
+      setWorkoutTimeSecs(t => t + 2) // Simulate time passing faster (2 virtual mins per 3 real secs)
+      if (Math.random() > 0.5) {
         setReps(r => {
           const next = r + 1
           setRepFlash(true)
           setTimeout(() => setRepFlash(false), 300)
           // Feed entry
           setFeedItems(prev => {
-            const entry = { id: nextId.current++, type: 'us', text: `SETV performed 1 squat!`, sub: 'Just now' }
+            const entry = { id: nextId.current++, type: 'us', text: `${user?.username || 'You'} performed 1 squat!`, sub: 'Just now' }
             const updated = [entry, ...prev].slice(0, 10)
             return updated
           })
@@ -46,7 +49,21 @@ export default function DuelPage() {
       }
     }, 3000)
     return () => clearInterval(iv)
-  }, [])
+  }, [user])
+
+  // Energy pool logic: 100% starts. 60 min total capacity. 
+  // If user works 45 min, 25% energy is left. After 0%, needs 15 min break.
+  const energyPercent = Math.max(0, 100 - Math.floor((workoutTimeSecs / 60) * 100))
+  const needsRecovery = energyPercent === 0
+
+  const handleInvite = () => {
+    const inviteText = `Hey! Join me on FitVision, the ultimate AI fitness platform! Challenge me to a duel here: https://fitvision.com/duel?invite=${user?.username || 'user'}`
+    navigator.clipboard.writeText(inviteText)
+    alert('Invite link copied to clipboard with welcome message!')
+  }
+
+  const calories = Math.floor(reps * 4.2)
+  const accuracy = Math.max(45, 98 - Math.floor(reps * 0.15))
 
   // Scroll feed to top when new items added
   useEffect(() => {
@@ -97,7 +114,7 @@ export default function DuelPage() {
               onMouseOver={e => e.currentTarget.style.background = '#e89b7b'}
               onMouseOut={e => e.currentTarget.style.background = '#d4a574'}
             >Find Opponent</button>
-            <button id="btn-invite" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '1rem 2rem', borderRadius: '0.75rem', cursor: 'pointer', transition: 'background 0.2s' }}
+            <button id="btn-invite" onClick={handleInvite} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '1rem 2rem', borderRadius: '0.75rem', cursor: 'pointer', transition: 'background 0.2s' }}
               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
               onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             >Invite Friend</button>
@@ -126,12 +143,12 @@ export default function DuelPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '2rem', alignItems: 'center' }}>
                 {/* Your side */}
                 <ArenaSide
-                  name="Commander SETV"
-                  subtitle="Active: Squats"
-                  energy={84}
+                  name={user?.username || "Commander"}
+                  subtitle={needsRecovery ? "15 MIN BREAK REQUIRED" : "Active: Squats"}
+                  energy={energyPercent}
                   reps={reps}
                   repFlash={repFlash}
-                  avatarSrc="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                  avatarSrc={user?.avatar_url ? (user.avatar_url.startsWith('/') ? `http://127.0.0.1:8000${user.avatar_url}` : user.avatar_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Felix'}`}
                   badge="YOU"
                   isOpponent={false}
                 />
@@ -154,8 +171,8 @@ export default function DuelPage() {
 
             {/* Stat mini-cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <MiniStatCard icon="lucide:flame"  label="Calories Burned" value="142" color="#e89b7b"  pct={65} barColor="#d4a574" />
-              <MiniStatCard icon="lucide:target" label="Form Accuracy"   value="94%" color="#22d3ee" pct={94} barColor="#22d3ee" iconBg="rgba(6,182,212,0.1)" />
+              <MiniStatCard icon="lucide:flame"  label="Calories Burned" value={`${calories} kcal`} color="#e89b7b"  pct={Math.min(100, calories/5)} barColor="#d4a574" />
+              <MiniStatCard icon="lucide:target" label="Form Accuracy"   value={`${accuracy}%`} color="#22d3ee" pct={accuracy} barColor="#22d3ee" iconBg="rgba(6,182,212,0.1)" />
             </div>
 
             {/* Challenge modes */}

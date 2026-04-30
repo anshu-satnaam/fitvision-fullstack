@@ -49,6 +49,7 @@ export default function LeaderboardPage() {
   const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState('Week')
   const [liveBoard, setLiveBoard] = useState(null)  // null = loading
+  const [myRankData, setMyRankData] = useState(null)
   const cardRefs = useRef([])
 
   // Fetch real leaderboard on mount
@@ -76,6 +77,10 @@ export default function LeaderboardPage() {
         setLiveBoard(formatted)
       })
       .catch(() => setLiveBoard([]))
+
+    if (user) {
+      socialAPI.myRank().then(data => setMyRankData(data)).catch(console.error)
+    }
   }, [user])
 
   // Derived: use live data when available, fall back to static mock
@@ -183,23 +188,23 @@ export default function LeaderboardPage() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span className="heading" style={{ fontSize: '4.5rem', lineHeight: 1, color: 'white' }}>#7</span>
+                <span className="heading" style={{ fontSize: '4.5rem', lineHeight: 1, color: 'white' }}>#{myRankData?.rank || '--'}</span>
                 <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', color: '#d4a574', letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Global</span>
               </div>
-              <p style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', marginBottom: '1.5rem' }}>Elite Veteran III</p>
+              <p style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', marginBottom: '1.5rem' }}>Level {myRankData?.level || 1} Elite</p>
 
               {/* Progress to next rank */}
               <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>Progress to Veteran II</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#d4a574' }}>158 Reps to go</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>Total Points</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#d4a574' }}>{myRankData?.points?.toLocaleString() || 0} PTS</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', overflow: 'hidden', marginBottom: '2rem' }}>
-                <div style={{ width: '72%', height: '100%', background: '#d4a574', borderRadius: '9999px', boxShadow: '0 0 10px rgba(212,165,116,0.4)' }} />
+                <div style={{ width: '100%', height: '100%', background: '#d4a574', borderRadius: '9999px', boxShadow: '0 0 10px rgba(212,165,116,0.4)' }} />
               </div>
 
               {/* Mini stats */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {[{ label: 'Best Streak', value: '12 Days' }, { label: 'Form Score', value: '94.2%' }].map(s => (
+                {[{ label: 'Current Streak', value: `${myRankData?.streak || 0} Days` }, { label: 'Form Score', value: '94.2%' }].map(s => (
                   <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: '0.35rem' }}>{s.label}</span>
                     <span className="heading" style={{ fontSize: '1.25rem', textTransform: 'uppercase' }}>{s.value}</span>

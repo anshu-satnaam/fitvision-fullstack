@@ -111,6 +111,9 @@ export const socialAPI = {
   /** GET /leaderboard?page=1&size=20 */
   leaderboard: (page = 1, size = 20) =>
     req('GET', `/leaderboard?page=${page}&size=${size}`),
+
+  /** GET /leaderboard/me */
+  myRank: () => req('GET', '/leaderboard/me'),
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

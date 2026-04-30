@@ -68,6 +68,24 @@ async def get_leaderboard(
     return entries
 
 
+@router.get("/leaderboard/me")
+async def get_my_leaderboard_rank(current_user: User = Depends(get_current_user)):
+    """Get the current user's global rank and stats."""
+    # Rank is 1 + number of users with more points
+    higher_ranked_count = await User.find(User.points > current_user.points).count()
+    rank = higher_ranked_count + 1
+
+    return {
+        "user_id": str(current_user.id),
+        "username": current_user.username,
+        "avatar_url": current_user.avatar_url,
+        "points": current_user.points,
+        "streak": current_user.streak,
+        "level": current_user.level,
+        "rank": rank,
+    }
+
+
 # ── Friends ───────────────────────────────────────────────────
 
 @router.get("/friends", response_model=list[FriendResponse])

@@ -18,6 +18,7 @@ class User(Document):
     xp: int = 0
     points: int = 0
     level: int = 1
+    last_login_date: Optional[datetime] = None
 
     # ── Appearance / Profile ──────────────────────────────────
     bio: Optional[str] = None
