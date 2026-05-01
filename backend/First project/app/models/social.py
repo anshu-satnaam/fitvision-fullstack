@@ -39,3 +39,40 @@ class ActivityFeed(Document):
 
     class Settings:
         name = "activity_feed"
+
+
+class Clan(Document):
+    """Clan for grouping users together."""
+    name: Indexed(str, unique=True)
+    description: Optional[str] = None
+    leader_id: Indexed(PydanticObjectId)
+    icon: Optional[str] = None
+    total_xp: int = 0
+    level: int = 1
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "clans"
+
+
+class ClanMember(Document):
+    """User membership within a clan."""
+    clan_id: Indexed(PydanticObjectId)
+    user_id: Indexed(PydanticObjectId)
+    role: str = "member"  # "leader", "officer", "member"
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "clan_members"
+
+
+class ClanMessage(Document):
+    """Message sent within a clan chat."""
+    clan_id: Indexed(PydanticObjectId)
+    user_id: Indexed(PydanticObjectId)
+    username: str
+    content: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "clan_messages"

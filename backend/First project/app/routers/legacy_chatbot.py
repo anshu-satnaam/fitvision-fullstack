@@ -16,8 +16,8 @@ last_reply_by_user: dict[str, str] = {}
 
 class ChatMessageRequest(BaseModel):
     message: str
-    session_reps: int | None = None
-    current_exercise: str | None = None
+    session_reps: int   = None
+    current_exercise: str   = None
 
 SYSTEM_PROMPT = """
 You are FitVision AI Voice Coach, an energetic, motivating, and highly supportive fitness trainer!
@@ -43,7 +43,7 @@ def enforce_voice_output(reply: str):
         return "Keep going, you're doing great!"
     return cleaned
 
-def ensure_not_repeated(reply: str, previous_reply: str | None, question: str):
+def ensure_not_repeated(reply: str, previous_reply: str  , question: str):
     if not previous_reply:
         return reply
     if reply != previous_reply:
@@ -73,7 +73,7 @@ def fallback_coach_response(question: str):
         return "Stop now and keep your spine neutral."
     return "Repeat that clearly"
 
-async def llm_reply(prompt: str, previous_reply: str | None):
+async def llm_reply(prompt: str, previous_reply: str  ):
     settings = get_settings()
     api_key = settings.QWEN_API_KEY
 

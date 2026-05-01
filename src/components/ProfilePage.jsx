@@ -37,10 +37,10 @@ export default function ProfilePage() {
     avatar: user?.avatar_url || 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=400&auto=format&fit=crop',
   })
   const [stats, setStats] = useState([
-    { label: 'Total Reps', value: user?.points?.toLocaleString() || '0', color: '#d4a574' },
+    { label: 'Total Reps', value: (user?.total_reps ?? 0).toLocaleString(), color: '#d4a574' },
     { label: 'Workouts',   value: '—',    color: 'white' },
-    { label: 'Streak',     value: `${user?.streak ?? '—'} 🔥`, color: '#f97316' },
-    { label: 'PR Score',   value: `${user?.level ?? '—'}`,  color: '#22d3ee' },
+    { label: 'Streak',     value: `${user?.streak ?? 0} 🔥`, color: '#f97316' },
+    { label: 'PR Score',   value: `${user?.level ?? 1}`,  color: '#22d3ee' },
   ])
   const [chartDays, setChartDays] = useState(DEFAULT_CHART_DAYS)
   const cardRefs = useRef([])
@@ -88,7 +88,7 @@ export default function ProfilePage() {
         avatar: p.avatar_url || f.avatar,
       }))
       setStats([
-        { label: 'Total Reps', value: (p.points || 0).toLocaleString(), color: '#d4a574' },
+        { label: 'Total Reps', value: (p.total_reps || 0).toLocaleString(), color: '#d4a574' },
         { label: 'Workouts',   value: '—',                              color: 'white'    },
         { label: 'Streak',     value: `${p.streak ?? 0} 🔥`,           color: '#f97316'  },
         { label: 'PR Score',   value: `${p.level  ?? 1}`,              color: '#22d3ee'  },
@@ -371,9 +371,11 @@ export default function ProfilePage() {
                         // Update weight/height via stats endpoint
                         if (form.weight) await profileAPI.updateStats({ weight: parseFloat(form.weight) })
                         refreshUser()
-                      } catch { /* ignore if backend offline */ }
+                        setEditing(false)
+                      } catch (err) { 
+                        alert(err.response?.data?.detail || 'Failed to update profile')
+                      }
                       setSaving(false)
-                      setEditing(false)
                     }}
                     style={{ width: '100%', background: '#d4a574', color: '#12080d', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', padding: '1rem', borderRadius: '0.75rem', border: 'none', cursor: 'pointer', fontSize: '0.8rem', boxShadow: '0 8px 20px rgba(212,165,116,0.3)', transition: 'background 0.2s' }}
                     onMouseOver={e => e.currentTarget.style.background = '#e89b7b'}

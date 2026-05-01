@@ -1,123 +1,90 @@
-/**
- * api.js — Central service layer for all backend calls.
- * Every request automatically injects the stored JWT token.
- * All paths are relative (/api/...) so the Vite proxy forwards them to FastAPI.
- */
+import axios from 'axios';
 
-const BASE = '/api'
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  const { hostname } = window.location;
+  // If we're on localhost, use the same hostname (localhost or 127.0.0.1)
+  return `http://${hostname}:8000`;
+};
 
-// ── Token helpers ────────────────────────────────────────────────────────────
-export const getToken  = () => localStorage.getItem('fv_token')
-export const setToken  = (t) => localStorage.setItem('fv_token', t)
-export const clearToken = () => localStorage.removeItem('fv_token')
+const api = axios.create({
+  baseURL: getBaseURL(),
+});
 
-function authHeaders(extra = {}) {
-  const token = getToken()
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('[API Error]', error.message, error.config?.url);
+    if (error.message === 'Network Error') {
+      console.error('The backend might be down or unreachable at ' + api.defaults.baseURL);
+    }
+    return Promise.reject(error);
   }
-}
+);
 
-async function req(method, path, body) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: authHeaders(),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || 'Request failed')
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return res.json()
-}
+  return config;
+});
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
-export const authAPI = {
-  /** POST /auth/signup */
-  signup: (username, email, password) =>
-    req('POST', '/auth/signup', { username, email, password }),
-
-  /** POST /auth/login — login by email */
-  login: (email, password) =>
-    req('POST', '/auth/login', { email, password }),
-
-  /** GET /auth/me */
-  me: () => req('GET', '/auth/me'),
-}
-
-// ── Profile ──────────────────────────────────────────────────────────────────
 export const profileAPI = {
-  /** GET /profile */
-  get: () => req('GET', '/profile'),
-
-  /** PUT /profile */
-  update: (data) => req('PUT', '/profile', data),
-
-  /** POST /auth/profile — update age/height/weight via fitvision adapter */
-  updateStats: (data) => req('PUT', '/auth/profile', data),
-
-  /** POST /profile/upload-avatar */
+  get: () => api.get('/api/profile').then(res => res.data),
+  update: (data) => api.put('/api/profile', data).then(res => res.data),
+  updateStats: (data) => api.put('/api/profile', data).then(res => res.data),
   uploadAvatar: async (file) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    const token = getToken();
-    const res = await fetch('/api/profile/upload-avatar', {
-      method: 'POST',
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: fd
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/api/profile/upload-avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
-    if (!res.ok) throw new Error('Upload failed');
-    return res.json();
+    return res.data;
   },
-}
+  incrementReps: (count) => api.post(`/api/profile/increment-reps?count=${count}`).then(res => res.data),
+};
 
-// ── Workouts ─────────────────────────────────────────────────────────────────
 export const workoutAPI = {
-  /** GET /workouts */
-  myWorkouts: () => req('GET', '/workouts'),
+  myWorkouts: () => api.get('/api/workouts/me').then(res => res.data),
+  logWorkout: (data) => api.post('/api/workouts', data).then(res => res.data),
+};
 
-  /** POST /workouts/start */
-  startSession: (exercise) => req('POST', '/workouts/start', { exercise }),
+export const authAPI = {
+  login: (email, password) => api.post('/api/login', { username: email, password }).then(res => res.data),
+  signup: (username, email, password) => api.post('/api/register', { username, email, password }).then(res => res.data),
+  firebaseLogin: (data) => api.post('/api/firebase-login', data).then(res => res.data),
+  me: () => api.get('/api/auth/me').then(res => res.data),
+};
 
-  /** POST /workouts/end */
-  endSession: (session_id, reps) => req('POST', '/workouts/end', { session_id, reps }),
+export const getToken = () => localStorage.getItem('token');
+export const setToken = (token) => localStorage.setItem('token', token);
+export const clearToken = () => localStorage.removeItem('token');
 
-  /** POST /workouts (quick log) */
-  logWorkout: (exercise, reps) => req('POST', '/workouts', { exercise, reps }),
-
-  /** POST /workouts/ai */
-  logAiWorkout: (data) => req('POST', '/workouts/ai', data),
-
-  /** POST /ai/posture-feedback */
-  postureFeedback: (exercise, avg_angle, reps, stability) => req('POST', '/ai/posture-feedback', { exercise, avg_angle, reps, stability }),
-}
-
-// ── Chatbot ───────────────────────────────────────────────────────────────────
 export const chatbotAPI = {
-  /**
-   * POST /chatbot/message
-   * @param {string} message
-   * @param {number} session_reps
-   * @param {string} current_exercise
-   */
-  send: (message, session_reps = 0, current_exercise = 'general') =>
-    req('POST', '/chatbot/message', { message, session_reps, current_exercise }),
-}
+  send: (text) => api.post('/api/chatbot', { content: text }).then(res => res.data),
+};
 
-// ── Leaderboard / Social ──────────────────────────────────────────────────────
 export const socialAPI = {
-  /** GET /leaderboard?page=1&size=20 */
-  leaderboard: (page = 1, size = 20) =>
-    req('GET', `/leaderboard?page=${page}&size=${size}`),
+  leaderboard: (page = 1, size = 20) => api.get(`/api/leaderboard?page=${page}&size=${size}`).then(res => res.data),
+  myRank: () => api.get('/api/my-rank').then(res => res.data),
+  search: (q) => api.get(`/api/users/search?q=${q}`).then(res => res.data),
+  getFriends: () => api.get('/api/friends').then(res => res.data),
+  getSuggestions: () => api.get('/api/friends/suggestions').then(res => res.data),
+  getPendingRequests: () => api.get('/api/friends/requests/pending').then(res => res.data),
+  sendRequest: (userId) => api.post(`/api/friends/${userId}/request`).then(res => res.data),
+  acceptRequest: (userId) => api.post(`/api/friends/${userId}/accept`).then(res => res.data),
+  rejectRequest: (userId) => api.post(`/api/friends/${userId}/reject`).then(res => res.data),
+  removeFriend: (userId) => api.delete(`/api/friends/${userId}`).then(res => res.data),
+  getUserProfile: (id) => api.get(`/api/users/${id}/profile`).then(res => res.data),
+  getClans: () => api.get('/api/clans').then(res => res.data),
+  getMyClan: () => api.get('/api/clans/my').then(res => res.data),
+  createClan: (data) => api.post('/api/clans', data).then(res => res.data),
+  joinClan: (id) => api.post(`/api/clans/${id}/join`).then(res => res.data),
+  leaveClan: (id) => api.post(`/api/clans/${id}/leave`).then(res => res.data),
+  getClanMembers: (id) => api.get(`/api/clans/${id}/members`).then(res => res.data),
+  getClanChat: (id) => api.get(`/api/clans/${id}/chat`).then(res => res.data),
+  sendClanMessage: (id, content) => api.post(`/api/clans/${id}/chat`, { content }).then(res => res.data),
+};
 
-  /** GET /leaderboard/me */
-  myRank: () => req('GET', '/leaderboard/me'),
-}
-
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-export const dashboardAPI = {
-  /** GET /dashboard */
-  get: () => req('GET', '/dashboard'),
-}
+export default api;

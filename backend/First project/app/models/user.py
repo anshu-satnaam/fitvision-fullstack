@@ -17,6 +17,7 @@ class User(Document):
     streak: int = 0
     xp: int = 0
     points: int = 0
+    total_reps: int = 0
     level: int = 1
     last_login_date: Optional[datetime] = None
 

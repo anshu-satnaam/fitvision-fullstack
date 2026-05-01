@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from beanie import PydanticObjectId
 from beanie.operators import Or, And
 
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 import uuid
@@ -33,17 +34,17 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 class ProfileUpdate(BaseModel):
-    age: int | None = None
-    height: float | None = None
-    weight: float | None = None
+    age: Optional[int]   = None
+    height: Optional[float]   = None
+    weight: Optional[float]   = None
 
 class UserOut(BaseModel):
     id: str
     username: str
     email: EmailStr
-    age: int | None = None
-    height: float | None = None
-    weight: float | None = None
+    age: Optional[int]   = None
+    height: Optional[float]   = None
+    weight: Optional[float]   = None
     total_reps: int = 0
     created_at: datetime
 
@@ -137,11 +138,6 @@ async def update_profile(
     await current_user.save()
     return map_user_out(current_user)
 
-@router.get("/leaderboard", response_model=list[UserOut])
-async def get_leaderboard():
-    # Sort by points descending
-    users = await User.find().sort(-User.points).limit(10).to_list()
-    return [map_user_out(u) for u in users]
 
 @router.post("/workouts", response_model=WorkoutOut)
 async def create_workout(

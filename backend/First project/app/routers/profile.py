@@ -5,7 +5,7 @@ Profile routes — view, update profile, upload avatar.
 import os
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Query
 
 from app.config import get_settings
 from app.dependencies import get_current_user
@@ -30,11 +30,33 @@ async def update_profile(
     """Update the current user's profile. Only provided fields are updated."""
     update_data = updates.model_dump(exclude_unset=True)
 
+    if "username" in update_data:
+        new_username = update_data["username"]
+        if new_username != current_user.username:
+            existing_user = await User.find_one(User.username == new_username)
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Username already taken, please try a different one."
+                )
+
     for field, value in update_data.items():
         setattr(current_user, field, value)
 
     await current_user.save()
 
+    return UserResponse.model_validate(current_user)
+
+
+@router.post("/increment-reps", response_model=UserResponse)
+async def increment_reps(
+    count: int = Query(..., ge=1),
+    current_user: User = Depends(get_current_user),
+):
+    """Increment total reps and points for the user."""
+    current_user.total_reps += count
+    current_user.points += (count * 5) # 5 points per rep
+    await current_user.save()
     return UserResponse.model_validate(current_user)
 
 

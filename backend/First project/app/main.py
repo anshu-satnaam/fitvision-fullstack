@@ -30,7 +30,7 @@ from app.routers import (
     workout_plans,
 )
 from app.chatbot import router as chatbot_router
-from app.routers import fitvision_adapter, legacy_chatbot, legacy_websocket, ai
+from app.routers import fitvision_adapter, legacy_chatbot, legacy_websocket, ai, duel
 
 settings = get_settings()
 
@@ -87,6 +87,7 @@ api_router.include_router(fitvision_adapter.router)
 api_router.include_router(legacy_chatbot.router)
 api_router.include_router(legacy_websocket.router)
 api_router.include_router(ai.router)
+api_router.include_router(duel.router)
 
 @api_router.get("/health", tags=["Health"])
 async def health():

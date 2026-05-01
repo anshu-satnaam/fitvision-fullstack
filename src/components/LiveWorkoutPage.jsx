@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react'
 import DashboardNav from './DashboardNav'
 import DashboardMascot from './DashboardMascot'
 import FloatingParticles from './FloatingParticles'
-import { workoutAPI, chatbotAPI, getToken } from '../api'
+import { workoutAPI, chatbotAPI, profileAPI, getToken } from '../api'
 
 const EXERCISES = ['Squats', 'Push-ups']
 
@@ -49,6 +49,18 @@ export default function LiveWorkoutPage() {
   useEffect(() => {
     repsRef.current = reps
   }, [reps])
+
+  // ── Navigation Guard ──
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (sessionActive) {
+        e.preventDefault()
+        e.returnValue = 'You have an active workout. Are you sure you want to quit?'
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [sessionActive])
 
   // Connect Chatbot WebSocket
   useEffect(() => {
@@ -238,6 +250,8 @@ export default function LiveWorkoutPage() {
       repsRef.current = nextReps
       setReps(nextReps)
       setRepFlash(true)
+      // Global increment
+      profileAPI.incrementReps(1).catch(console.error)
       setTimeout(() => setRepFlash(false), 300)
     }
     setPostureTip(ruleFeedback)
@@ -250,7 +264,7 @@ export default function LiveWorkoutPage() {
       console.error("MediaPipe Pose not loaded");
       return;
     }
-    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` })
+    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}` })
     pose.setOptions({
       modelComplexity: 0,
       smoothLandmarks: true,
@@ -264,8 +278,15 @@ export default function LiveWorkoutPage() {
   const startSession = async () => {
     try {
       const ex = exercise.toLowerCase().replace('-', '')
-      const data = await workoutAPI.startSession(ex)
-      setSessionId(data.session_id)
+      
+      try {
+        const data = await workoutAPI.startSession(ex)
+        setSessionId(data.session_id)
+      } catch (e) {
+        console.warn("Backend startSession failed or not available, continuing locally.", e)
+        setSessionId("local-" + Date.now())
+      }
+      
       setSessionActive(true)
       setReps(0)
       repsRef.current = 0
@@ -301,6 +322,7 @@ export default function LiveWorkoutPage() {
       rafRef.current = requestAnimationFrame(frameLoop)
 
     } catch (err) {
+      console.error(err)
       setCoachMessages(prev => [...prev, { from: 'coach', text: 'Error starting camera or session.' }])
     }
   }
@@ -322,10 +344,16 @@ export default function LiveWorkoutPage() {
     }
 
     try {
-      if (sessionId) {
-        await workoutAPI.endSession(sessionId, reps)
-      } else {
-        await workoutAPI.logWorkout(exercise.toLowerCase(), reps)
+      if (reps > 0) {
+        await workoutAPI.logAiWorkout({
+          exercise: exercise.toLowerCase().replace('-', ''),
+          reps: reps,
+          duration_seconds: 60,
+          avg_angle: 0,
+          calories: reps * 2,
+          posture_score: 90,
+          replay_data: {}
+        })
       }
       setCoachMessages(prev => [...prev, { from: 'coach', text: `Great work! ${reps} reps saved to your profile. Rest up!` }])
     } catch {

@@ -7,9 +7,9 @@ from pydantic import BaseModel
 
 class AIPulseExercise(BaseModel):
     name: str
-    reps: int | None = None
-    sets: int | None = None
-    duration_seconds: int | None = None
+    reps: int   = None
+    sets: int   = None
+    duration_seconds: int   = None
 
 
 class AIPulse(BaseModel):
@@ -25,7 +25,7 @@ class StatsSummary(BaseModel):
     total_workouts: int = 0
     total_duration_minutes: int = 0
     total_calories: float = 0
-    avg_posture_score: float | None = None
+    avg_posture_score: float   = None
     total_reps: int = 0
 
 
@@ -35,17 +35,17 @@ class WaterSummary(BaseModel):
 
 
 class DietPlan(BaseModel):
-    pre_workout: str | None = None
-    post_workout: str | None = None
-    analysis: str | None = None
-    management_suggestion: str | None = None
+    pre_workout: str   = None
+    post_workout: str   = None
+    analysis: str   = None
+    management_suggestion: str   = None
 
 
 class DashboardResponse(BaseModel):
     greeting: str
     streak: int = 0
     weekly_progress: list[bool] = []  # 7 booleans, Mon–Sun
-    ai_pulse: AIPulse | None = None
+    ai_pulse: AIPulse   = None
     stats: StatsSummary
     water: WaterSummary
-    diet_plan: DietPlan | None = None
+    diet_plan: DietPlan   = None

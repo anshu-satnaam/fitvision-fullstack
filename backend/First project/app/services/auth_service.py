@@ -3,6 +3,7 @@ Authentication service — password hashing, JWT token management, reset tokens.
 """
 
 import uuid
+from typing import Optional
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -30,7 +31,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # ── JWT Tokens ────────────────────────────────────────────────
 
-def create_access_token(user_id: str, expires_delta: timedelta | None = None) -> str:
+def create_access_token(user_id: str, expires_delta: timedelta = None) -> str:
     """Create a JWT access token for the given user."""
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -43,14 +44,14 @@ def create_access_token(user_id: str, expires_delta: timedelta | None = None) ->
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def decode_access_token(token: str) -> str | None:
+def decode_access_token(token: str) -> Optional[str]:
     """
     Decode a JWT access token and return the user_id string.
     Returns None if the token is invalid or expired.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        user_id_str: str | None = payload.get("sub")
+        user_id_str: str   = payload.get("sub")
         return user_id_str
     except (JWTError, ValueError):
         return None

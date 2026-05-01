@@ -66,8 +66,8 @@ export default function LeaderboardPage() {
             tier: r === 1 ? 'Grandmaster' : r <= 3 ? 'Elite' : 'Veteran',
             tierIcon: r === 1 ? 'lucide:star' : 'lucide:shield',
             tierColor: r === 1 ? '#d4a574' : '#C0C0C0',
-            reps: d.points.toLocaleString(),
-            isYou: user && d.username === user.username,
+            reps: (d.total_reps ?? 0).toLocaleString(),
+            isYou: user && (d.user_id === user.id || d.username === user.username),
             champion,
             height: champion ? 380 : r === 2 ? 320 : r === 3 ? 280 : undefined,
             borderColor: champion ? '#d4a574' : '#C0C0C0',
@@ -196,7 +196,7 @@ export default function LeaderboardPage() {
               {/* Progress to next rank */}
               <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>Total Points</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#d4a574' }}>{myRankData?.points?.toLocaleString() || 0} PTS</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#d4a574' }}>{(myRankData?.points ?? 0).toLocaleString()} PTS</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', overflow: 'hidden', marginBottom: '2rem' }}>
                 <div style={{ width: '100%', height: '100%', background: '#d4a574', borderRadius: '9999px', boxShadow: '0 0 10px rgba(212,165,116,0.4)' }} />

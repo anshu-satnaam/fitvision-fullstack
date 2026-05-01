@@ -2,6 +2,7 @@
 Authentication schemas — register, login, tokens, password reset.
 """
 
+from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -18,6 +19,12 @@ class RegisterRequest(BaseModel):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
         return v
+
+class FirebaseLoginRequest(BaseModel):
+    uid: str
+    email: EmailStr
+    username: str
+    avatar_url: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -57,7 +64,7 @@ class ResetPasswordRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     new_password: str
-    totp_code: str | None = None
+    totp_code: str   = None
 
     @field_validator("new_password")
     @classmethod

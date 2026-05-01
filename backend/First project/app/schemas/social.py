@@ -3,6 +3,7 @@ Social schemas — leaderboard, friends, chat, activity feed.
 """
 
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 from beanie import PydanticObjectId
 
@@ -10,7 +11,7 @@ from beanie import PydanticObjectId
 class LeaderboardEntry(BaseModel):
     user_id: PydanticObjectId
     username: str
-    avatar_url: str | None = None
+    avatar_url: Optional[str] = None
     points: int
     streak: int
     level: int
@@ -23,7 +24,7 @@ class LeaderboardEntry(BaseModel):
 class FriendResponse(BaseModel):
     user_id: PydanticObjectId
     username: str
-    avatar_url: str | None = None
+    avatar_url: Optional[str] = None
     level: int
     streak: int
     is_online: bool = False
@@ -54,9 +55,48 @@ class ChatMessageResponse(BaseModel):
 class ActivityFeedResponse(BaseModel):
     id: PydanticObjectId
     user_id: PydanticObjectId
-    username: str | None = None
+    username: str   = None
     activity_type: str
-    details: str | None = None
+    details: str   = None
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class ClanCreate(BaseModel):
+    name: str
+    description: Optional[str]   = None
+    icon: Optional[str]   = None
+
+class ClanResponse(BaseModel):
+    id: PydanticObjectId
+    name: str
+    description: Optional[str]   = None
+    icon: Optional[str]   = None
+    leader_id: PydanticObjectId
+    total_xp: int
+    level: int
+    created_at: datetime
+    member_count: int = 1
+
+    model_config = {"from_attributes": True}
+
+
+class ClanMemberResponse(BaseModel):
+    user_id: PydanticObjectId
+    username: str
+    avatar_url: Optional[str] = None
+    role: str
+    joined_at: datetime
+    level: int = 1
+
+    model_config = {"from_attributes": True}
+
+
+class ClanMessageResponse(BaseModel):
+    id: PydanticObjectId
+    user_id: PydanticObjectId
+    username: str
+    content: str
+    timestamp: datetime
 
     model_config = {"from_attributes": True}

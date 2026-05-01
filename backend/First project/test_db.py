@@ -1,12 +1,19 @@
 import asyncio
-import motor.motor_asyncio
+from motor.motor_asyncio import AsyncMongoClient
+from beanie import init_beanie
+from app.config import get_settings
+from app.models.user import User
+
+settings = get_settings()
 
 async def test():
-    try:
-        client = motor.motor_asyncio.AsyncIOMotorClient("mongodb+srv://pranjalvyas004_db_user:flOEWxU2COR4ums3@cluster0.c6pfmpp.mongodb.net/fitness_db?appName=Cluster0")
-        info = await client.server_info()
-        print("SUCCESS:", info.get("version"))
-    except Exception as e:
-        print("ERROR:", str(e))
+    client = AsyncMongoClient(settings.MONGODB_URI)
+    await init_beanie(database=client[settings.DATABASE_NAME], document_models=[User])
+    user = await User.find_one(User.username == "testuser")
+    if user:
+        print("Found:", user.username)
+    else:
+        print("Not found")
 
-asyncio.run(test())
+if __name__ == "__main__":
+    asyncio.run(test())

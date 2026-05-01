@@ -12,6 +12,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     ResetPasswordRequest,
     ChangePasswordRequest,
+    FirebaseLoginRequest,
 )
 from app.schemas.user import AuthResponse, UserResponse
 from app.services.auth_service import (
@@ -29,12 +30,13 @@ router = APIRouter(prefix="", tags=["Authentication"])
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def register(request: RegisterRequest):
     """Create a new user account."""
-    # Check if username exists
-    if await User.find_one(User.username == request.username):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken",
-        )
+    import secrets
+    base_username = request.username
+    username = base_username
+    while await User.find_one(User.username == username):
+        suffix = secrets.token_hex(2)
+        username = f"{base_username}_{suffix}"
+    request.username = username
 
     # Check if email exists
     if await User.find_one(User.email == request.email):
@@ -65,7 +67,8 @@ async def login(request: LoginRequest):
     """Authenticate user, update streak if first login of the day, and return access token."""
     from datetime import datetime, timezone, timedelta
     
-    user = await User.find_one(User.username == request.username)
+    from beanie.operators import Or
+    user = await User.find_one(Or(User.username == request.username, User.email == request.username))
 
     if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(
@@ -94,6 +97,33 @@ async def login(request: LoginRequest):
 
     token = create_access_token(str(user.id))
 
+    return AuthResponse(
+        access_token=token,
+        user=UserResponse.model_validate(user),
+    )
+
+@router.post("/firebase-login", response_model=AuthResponse)
+async def firebase_login(request: FirebaseLoginRequest):
+    """Authenticate user via Firebase and return access token."""
+    user = await User.find_one(User.email == request.email)
+    
+    if not user:
+        # Check if username is taken
+        username = request.username
+        import secrets
+        while await User.find_one(User.username == username):
+            username = f"{request.username}_{secrets.token_hex(2)}"
+        
+        user = User(
+            username=username,
+            email=request.email,
+            avatar_url=request.avatar_url,
+            hashed_password=secrets.token_urlsafe(16) # dummy
+        )
+        await user.insert()
+    
+    token = create_access_token(str(user.id))
+    
     return AuthResponse(
         access_token=token,
         user=UserResponse.model_validate(user),

@@ -4,6 +4,7 @@ User profile schemas — response and update.
 
 import uuid
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 from beanie import PydanticObjectId
 
@@ -16,25 +17,26 @@ class UserResponse(BaseModel):
     streak: int = 0
     xp: int = 0
     points: int = 0
+    total_reps: int = 0
     level: int = 1
     # Profile
-    bio: str | None = None
-    avatar_url: str | None = None
-    profile_image: str | None = None
+    bio: Optional[str]   = None
+    avatar_url: Optional[str]   = None
+    profile_image: Optional[str]   = None
     # Physical stats
-    age: int | None = None
-    height_cm: float | None = None
-    weight_kg: float | None = None
+    age: Optional[int]   = None
+    height_cm: Optional[float]   = None
+    weight_kg: Optional[float]   = None
     # Fitness profile
-    body_type: str | None = None
-    diet_goal: str | None = None
-    activity_level: str | None = None
+    body_type: Optional[str]   = None
+    diet_goal: Optional[str]   = None
+    activity_level: Optional[str]   = None
     # Daily targets
-    daily_sleep_goal: float | None = None
-    daily_water_goal: float | None = None
+    daily_sleep_goal: Optional[float]   = None
+    daily_water_goal: Optional[float]   = None
     # Health
-    injuries: str | None = None
-    dietary_preferences: str | None = None
+    injuries: Optional[str]   = None
+    dietary_preferences: Optional[str]   = None
     # Auth
     is_totp_enabled: bool = False
     # Timestamps
@@ -45,21 +47,21 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     """All fields optional for partial updates."""
-    username: str | None = None
-    email: EmailStr | None = None
-    bio: str | None = None
-    avatar_url: str | None = None
-    profile_image: str | None = None
-    age: int | None = None
-    height_cm: float | None = None
-    weight_kg: float | None = None
-    body_type: str | None = None
-    diet_goal: str | None = None
-    activity_level: str | None = None
-    daily_sleep_goal: float | None = None
-    daily_water_goal: float | None = None
-    injuries: str | None = None
-    dietary_preferences: str | None = None
+    username: str   = None
+    email: EmailStr   = None
+    bio: str   = None
+    avatar_url: str   = None
+    profile_image: str   = None
+    age: int   = None
+    height_cm: float   = None
+    weight_kg: float   = None
+    body_type: str   = None
+    diet_goal: str   = None
+    activity_level: str   = None
+    daily_sleep_goal: float   = None
+    daily_water_goal: float   = None
+    injuries: str   = None
+    dietary_preferences: str   = None
 
 
 class AuthResponse(BaseModel):

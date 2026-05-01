@@ -4,10 +4,11 @@ import AuthPage        from './components/AuthPage'
 import LiveWorkoutPage from './components/LiveWorkoutPage'
 import ChatbotPage     from './components/ChatbotPage'
 import ProfilePage     from './components/ProfilePage'
-import DuelPage        from './components/DuelPage'
+import DuelPage        from './components/duel/DuelPage'
 import LeaderboardPage from './components/LeaderboardPage'
 import FriendsPage     from './components/FriendsPage'
 import ClanPage        from './components/ClanPage'
+import FriendsSidebar  from './components/FriendsSidebar'
 
 /** Inner router — needs to be inside AuthProvider to call useAuth */
 function AppRoutes() {
@@ -42,6 +43,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
+      <FriendsSidebar />
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

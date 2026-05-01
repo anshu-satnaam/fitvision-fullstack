@@ -46,13 +46,19 @@ export function AuthProvider({ children }) {
 
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser({
-          id:         firebaseUser.uid,
-          username:   firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-          email:      firebaseUser.email,
-          avatar_url: firebaseUser.photoURL,
-          source:     'firebase',
-        })
+        try {
+          const res = await authAPI.firebaseLogin({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            avatar_url: firebaseUser.photoURL
+          });
+          setToken(res.access_token);
+          setUser({ ...res.user, source: 'firebase' });
+        } catch (err) {
+          console.error("Backend login failed for Firebase user", err);
+          setUser(false);
+        }
       } else {
         setUser(false)
       }
@@ -99,10 +105,27 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const handleSocialLogin = useCallback(async (providerFn) => {
+    const { signInWithPopup } = await import('firebase/auth')
+    const result = await signInWithPopup(auth, providerFn())
+    const firebaseUser = result.user
+    
+    // Exchange for backend JWT immediately
+    const res = await authAPI.firebaseLogin({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+      avatar_url: firebaseUser.photoURL
+    });
+    setToken(res.access_token);
+    setUser({ ...res.user, source: 'firebase' });
+    return res.user;
+  }, [])
+
   const isLoggedIn = Boolean(user)
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, loading, loginWithBackend, registerWithBackend, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoggedIn, loading, loginWithBackend, registerWithBackend, handleSocialLogin, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

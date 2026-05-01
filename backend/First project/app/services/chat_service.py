@@ -17,6 +17,8 @@ class ConnectionManager:
     def __init__(self):
         # user_id (str) -> list of active WebSocket connections
         self.active_connections: dict[str, list[WebSocket]] = {}
+        # clan_id (str) -> list of active WebSocket connections
+        self.clan_rooms: dict[str, list[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, user_id: str):
         """Accept a new WebSocket connection and register it."""
@@ -59,6 +61,34 @@ class ConnectionManager:
         """Send a message to all connected users."""
         for user_id in list(self.active_connections.keys()):
             await self.send_personal_message(message, user_id)
+
+    async def connect_to_clan(self, websocket: WebSocket, clan_id: str):
+        """Register a connection to a specific clan chat room."""
+        if clan_id not in self.clan_rooms:
+            self.clan_rooms[clan_id] = []
+        self.clan_rooms[clan_id].append(websocket)
+
+    def disconnect_from_clan(self, websocket: WebSocket, clan_id: str):
+        """Remove a connection from a clan room."""
+        if clan_id in self.clan_rooms:
+            self.clan_rooms[clan_id] = [
+                conn for conn in self.clan_rooms[clan_id] if conn != websocket
+            ]
+            if not self.clan_rooms[clan_id]:
+                del self.clan_rooms[clan_id]
+
+    async def broadcast_to_clan(self, message: dict, clan_id: str):
+        """Send a message to all users in a specific clan room."""
+        if clan_id in self.clan_rooms:
+            dead_connections = []
+            for connection in self.clan_rooms[clan_id]:
+                try:
+                    await connection.send_json(message)
+                except Exception:
+                    dead_connections.append(connection)
+            # Clean up
+            for conn in dead_connections:
+                self.disconnect_from_clan(conn, clan_id)
 
 
 async def save_chat_message(

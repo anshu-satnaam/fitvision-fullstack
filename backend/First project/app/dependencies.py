@@ -2,6 +2,7 @@
 Shared FastAPI dependencies — authentication.
 """
 
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from beanie import PydanticObjectId
@@ -42,3 +43,18 @@ async def get_current_user(
         )
 
     return user
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+) -> Optional[User]:
+    """Return user if authenticated, else None."""
+    if not credentials:
+        return None
+    token = credentials.credentials
+    user_id = decode_access_token(token)
+    if not user_id:
+        return None
+    try:
+        return await User.get(PydanticObjectId(user_id))
+    except:
+        return None

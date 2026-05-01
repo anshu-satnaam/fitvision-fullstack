@@ -4,6 +4,8 @@ import { Icon } from '@iconify/react'
 import { auth, googleProvider, facebookProvider, appleProvider, isDemoMode } from '../firebase'
 import { signInWithPopup } from 'firebase/auth'
 
+import { useAuth } from '../AuthContext'
+
 const PROVIDERS = [
   { id: 'google',   icon: 'logos:google-icon',   label: 'Google'   },
   { id: 'apple',    icon: 'ri:apple-fill',        label: 'Apple'    },
@@ -18,6 +20,7 @@ const providerMap = {
 
 export default function SocialAuth() {
   const navigate = useNavigate()
+  const { handleSocialLogin } = useAuth()
   const [loading, setLoading] = useState(null)
   const [toast, setToast]     = useState(null)
 
@@ -34,11 +37,11 @@ export default function SocialAuth() {
     }
     setLoading(providerId)
     try {
-      await signInWithPopup(auth, providerMap[providerId]())
+      await handleSocialLogin(providerMap[providerId])
       navigate('/dashboard/live', { replace: true })
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        showToast(`Failed: ${err.code || err.message}`)
+        showToast(err.message || `Failed: ${err.code || err.message}`)
         console.error('[SocialAuth]', err)
       }
     } finally {
