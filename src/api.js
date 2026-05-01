@@ -13,6 +13,8 @@ const api = axios.create({
   baseURL: getBaseURL(),
 });
 
+export { getBaseURL };
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

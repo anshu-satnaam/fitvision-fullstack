@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react'
 import DashboardNav from './DashboardNav'
 import DashboardMascot from './DashboardMascot'
 import FloatingParticles from './FloatingParticles'
-import { profileAPI, workoutAPI } from '../api'
+import { profileAPI, workoutAPI, getBaseURL } from '../api'
 import { useAuth } from '../AuthContext'
 
 const STATS = [
@@ -186,7 +186,7 @@ export default function ProfilePage() {
               />
               <div style={{ width: '160px', height: '160px', borderRadius: '50%', border: '4px solid #d4a574', padding: '4px', boxShadow: '0 0 40px rgba(212,165,116,0.25)', position: 'relative', overflow: 'hidden' }}>
                 <img
-                  src={form.avatar?.startsWith('/') ? `http://127.0.0.1:8000${form.avatar}` : form.avatar}
+                  src={form.avatar?.startsWith('/') ? `${getBaseURL()}${form.avatar}` : form.avatar}
                   alt="Profile"
                   style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', opacity: uploadingAvatar ? 0.5 : 1 }}
                 />

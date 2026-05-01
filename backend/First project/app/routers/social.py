@@ -140,7 +140,7 @@ async def get_leaderboard(
     """Get the global leaderboard ranked by points."""
     offset = (page - 1) * size
 
-    users = await User.find_all().sort(-User.points).skip(offset).limit(size).to_list()
+    users = await User.find_all().sort(-User.total_reps).skip(offset).limit(size).to_list()
 
     entries = []
     for rank, user in enumerate(users, start=offset + 1):
@@ -168,6 +168,7 @@ async def get_leaderboard(
                 username=user.username,
                 avatar_url=user.avatar_url,
                 points=user.points,
+                total_reps=user.total_reps,
                 streak=user.streak,
                 level=user.level,
                 rank=rank,

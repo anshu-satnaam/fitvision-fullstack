@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Icon } from '@iconify/react'
 import { useAuth } from '../../AuthContext'
-import { profileAPI } from '../../api'
+import { profileAPI, getBaseURL } from '../../api'
 import AiHumanoid from './AiHumanoid'
 
 function fmtTime(secs) {
@@ -607,7 +607,7 @@ export default function DuelArena({ config, socket, onFinish }) {
   const winning     = myReps > oppReps
   const losing      = oppReps > myReps
   const avatarSrc   = user?.avatar_url
-    ? (user.avatar_url.startsWith('/') ? `http://127.0.0.1:8000${user.avatar_url}` : user.avatar_url)
+    ? (user.avatar_url.startsWith('/') ? `${getBaseURL()}${user.avatar_url}` : user.avatar_url)
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Me'}`
 
   return (

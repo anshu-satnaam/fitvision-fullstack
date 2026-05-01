@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react'
 import DashboardNav from './DashboardNav'
 import DashboardMascot from './DashboardMascot'
 import FloatingParticles from './FloatingParticles'
-import { socialAPI } from '../api'
+import { socialAPI, getBaseURL } from '../api'
 import { useAuth } from '../AuthContext'
 
 const PODIUM = [
@@ -309,7 +309,7 @@ function PodiumCard({ p, cardRef }) {
           boxShadow: `0 0 30px ${p.glowColor}`,
           overflow: 'hidden'
         }}>
-          <img src={p.avatar_url ? (p.avatar_url.startsWith('/') ? `http://127.0.0.1:8000${p.avatar_url}` : p.avatar_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.seed || p.name}`} alt={p.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+          <img src={p.avatar_url ? (p.avatar_url.startsWith('/') ? `${getBaseURL()}${p.avatar_url}` : p.avatar_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.seed || p.name}`} alt={p.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
         </div>
 
         {/* Rank label */}
@@ -373,7 +373,7 @@ function TableRow({ row }) {
 
       {/* User */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <img src={row.avatar_url ? (row.avatar_url.startsWith('/') ? `http://127.0.0.1:8000${row.avatar_url}` : row.avatar_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.seed || row.name}`} alt={row.name} style={{ width: '42px', height: '42px', borderRadius: '10px', border: row.isYou ? '2px solid rgba(212,165,116,0.4)' : 'none', objectFit: 'cover' }} />
+        <img src={row.avatar_url ? (row.avatar_url.startsWith('/') ? `${getBaseURL()}${row.avatar_url}` : row.avatar_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.seed || row.name}`} alt={row.name} style={{ width: '42px', height: '42px', borderRadius: '10px', border: row.isYou ? '2px solid rgba(212,165,116,0.4)' : 'none', objectFit: 'cover' }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontWeight: row.isYou ? 900 : 700, fontSize: '0.875rem', letterSpacing: '-0.01em', color: row.isYou ? 'white' : 'white' }}>{row.name}</span>
           <span style={{ fontSize: '0.6rem', fontWeight: 700, color: trendColor, display: 'flex', alignItems: 'center', gap: '3px' }}>

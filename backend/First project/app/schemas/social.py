@@ -13,6 +13,7 @@ class LeaderboardEntry(BaseModel):
     username: str
     avatar_url: Optional[str] = None
     points: int
+    total_reps: int = 0
     streak: int
     level: int
     rank: int
