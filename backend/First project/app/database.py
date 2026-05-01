@@ -10,7 +10,7 @@ from app.config import get_settings
 # Import all models here so Beanie can register them
 from app.models.user import User
 from app.models.workout import Workout, WorkoutLog
-from app.models.social import Friendship, ChatMessage, ActivityFeed, Clan, ClanMember
+from app.models.social import Friendship, ChatMessage, ActivityFeed, Clan, ClanMember, ClanMessage
 from app.models.water import WaterLog
 from app.models.routine import Routine
 from app.models.badge import Badge, UserBadge
@@ -40,6 +40,7 @@ async def init_db():
             UserBadge,
             WorkoutPlan,
             Clan,
-            ClanMember
+            ClanMember,
+            ClanMessage
         ],
     )

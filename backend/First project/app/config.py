@@ -28,7 +28,16 @@ class Settings(BaseSettings):
     RESET_TOKEN_EXPIRE_MINUTES: int = 30
 
     # ── CORS ──────────────────────────────────────────────────
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:8000", "http://localhost:8000", "ws://127.0.0.1:8000", "ws://localhost:8000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173", 
+        "http://localhost:5174", 
+        "http://127.0.0.1:5173", 
+        "http://127.0.0.1:5174", 
+        "http://127.0.0.1:8000", 
+        "http://localhost:8000",
+        "https://fitvision-fullstack.onrender.com",
+        "http://fitvision-fullstack.onrender.com"
+    ]
 
     # ── File Upload ───────────────────────────────────────────
     UPLOAD_DIR: str = "static/avatars"

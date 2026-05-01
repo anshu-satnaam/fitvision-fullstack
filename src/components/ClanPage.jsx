@@ -81,9 +81,14 @@ export default function ClanPage() {
     if (!myClan || wsRef.current) return
     
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = import.meta.env.VITE_API_URL 
+    let host = import.meta.env.VITE_API_URL 
       ? import.meta.env.VITE_API_URL.replace(/^https?:\/\//, '') 
-      : `${window.location.hostname}:8000`
+      : window.location.host;
+    
+    // In local dev, if frontend is on 5173, backend is on 8000
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      host = `${window.location.hostname}:8000`;
+    }
     
     const ws = new WebSocket(`${protocol}//${host}/api/clans/${myClan.id}/ws`)
     
