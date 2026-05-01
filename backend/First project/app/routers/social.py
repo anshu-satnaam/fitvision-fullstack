@@ -18,6 +18,7 @@ from app.schemas.social import (
     ClanResponse,
     ClanMemberResponse,
     ClanMessageResponse,
+    ChatMessageCreate
 )
 from app.services.chat_service import manager
 
